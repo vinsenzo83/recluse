@@ -1,0 +1,33 @@
+name: 'RECLUSE'
+description: '🕷️ Autonomous web-contract verification — block PRs on real bugs, feed the collective corpus.'
+branding: { icon: 'shield', color: 'purple' }
+inputs:
+  base:
+    description: 'Base ref to diff against (e.g. origin/main)'
+    required: false
+    default: 'origin/${{ github.base_ref }}'
+  corpus-api:
+    description: 'Shared corpus API base'
+    required: false
+    default: 'https://eduverse-ai.app/api/corpus'
+  contribute:
+    description: 'Contribute found patterns back to the collective corpus (1/0)'
+    required: false
+    default: '1'
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - name: RECLUSE weave
+      shell: bash
+      # working-directory 미지정 → 유저 레포(GITHUB_WORKSPACE)에서 git diff. 스크립트만 action_path 참조.
+      env:
+        SPIDER_CORPUS_API: ${{ inputs.corpus-api }}
+        RECLUSE_BASE: ${{ inputs.base }}
+        RECLUSE_CONTRIBUTE: ${{ inputs.contribute }}
+        # ANTHROPIC_API_KEY 는 호출 워크플로의 env/secret 에서 상속(없으면 advisory 모드)
+      run: |
+        npm i --silent --no-save --prefix "${{ github.action_path }}" @anthropic-ai/sdk
+        node "${{ github.action_path }}/cli/recluse.mjs" --base "${RECLUSE_BASE}"

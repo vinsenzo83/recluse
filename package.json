@@ -1,0 +1,22 @@
+{
+  "name": "recluse-mcp",
+  "version": "0.1.1",
+  "description": "🕷️ RECLUSE — autonomous web-contract verification as an MCP server. Spider checklist, live-contract query templates, severity tiering (King/Mid/Baby), weave planning, and a self-evolving collective learned-patterns corpus for any MCP client.",
+  "type": "module",
+  "bin": { "recluse-mcp": "src/index.js" },
+  "main": "src/index.js",
+  "files": ["src", "README.md"],
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "keywords": ["mcp", "model-context-protocol", "code-review", "qa", "verification", "ci", "bug-detection", "claude", "ai-agent"],
+  "repository": { "type": "git", "url": "git+https://github.com/vinsenzo83/recluse.git" },
+  "homepage": "https://eduverse-ai.app/recluse",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.8"
+  },
+  "engines": { "node": ">=18" },
+  "license": "UNLICENSED",
+  "publishConfig": { "access": "public" }
+}

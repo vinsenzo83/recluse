@@ -1,0 +1,19 @@
+# .github/workflows/recluse.yml — PR마다 RECLUSE 거미줄 검증(🔴면 차단)
+name: RECLUSE
+on:
+  pull_request:
+    branches: [main, master]
+jobs:
+  weave:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # diff를 위해 전체 히스토리 필요
+      - uses: vinsenzo83/recluse@v1   # (퍼블리시 후 경로)
+        with:
+          base: origin/${{ github.base_ref }}
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # 없으면 advisory(비차단)
+# 무료: ANTHROPIC_API_KEY 없이 advisory(알려진 함정 체크리스트).
+# 유료/팀: 키 설정 시 diff 실제 검증 + 🔴 차단 + 집단 corpus 환류.
