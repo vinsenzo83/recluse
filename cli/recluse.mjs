@@ -37,6 +37,19 @@ async function contribute(f) {
   } catch { /* best-effort */ }
 }
 
+// 🕸️ 여왕의 눈 — weave 실행을 중앙에 익명 보고(텔레메트리). best-effort.
+async function recordRun(source, findingsTotal, redCount, blocked, classes) {
+  if (!CONTRIB) return;
+  try {
+    await fetch(`${CORPUS}/runs`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...(process.env.RECLUSE_TOKEN ? { authorization: `Bearer ${process.env.RECLUSE_TOKEN}` } : {}) },
+      body: JSON.stringify({ source, findings_total: findingsTotal, red_count: redCount, blocked, classes, projectId: process.env.GITHUB_REPOSITORY || process.env.RECLUSE_PROJECT || null }),
+    });
+  } catch { /* best-effort telemetry */ }
+}
+const SRC = process.env.GITHUB_ACTIONS ? 'action' : 'cli';
+
 const diff = getDiff();
 if (!diff.trim()) { console.log('🕷️ RECLUSE — 변경 없음, 통과.'); process.exit(0); }
 const patterns = await pullCorpus();
@@ -46,6 +59,7 @@ if (!KEY) {
   console.log(`🕷️ RECLUSE advisory — 집단 corpus의 알려진 함정 ${patterns.length}개:`);
   for (const p of patterns.slice(0, 40)) console.log(`  [${p.severity}] ${p.klass}: ${p.name} → ${p.fix}`);
   console.log('\n(ANTHROPIC_API_KEY 설정 시 이 diff를 실제 거미줄 검증하고 🔴면 차단합니다.)');
+  await recordRun('advisory', 0, 0, false, []);
   process.exit(0);
 }
 
@@ -73,7 +87,7 @@ let findings = [];
 try { const m = text.match(/\{[\s\S]*\}/); if (m) findings = JSON.parse(m[0]).findings || []; } catch { /* parse fail → no findings */ }
 
 const red = findings.filter((f) => f.severity === 'red');
-if (!findings.length) { console.log('🕷️ RECLUSE — 거미줄에 걸린 것 없음. ✅ 통과.'); process.exit(0); }
+if (!findings.length) { console.log('🕷️ RECLUSE — 거미줄에 걸린 것 없음. ✅ 통과.'); await recordRun(SRC, 0, 0, false, []); process.exit(0); }
 console.log(`🕷️ RECLUSE — ${findings.length}건 (🔴 ${red.length} / 🟡 ${findings.length - red.length})\n`);
 for (const f of findings) {
   console.log(`${f.severity === 'red' ? '🔴' : '🟡'} [${f.klass}] ${f.title}  (${f.file})`);
@@ -82,4 +96,5 @@ for (const f of findings) {
   await contribute(f); // 집단 corpus 환류 — 스크럽은 서버가
 }
 console.log(red.length ? `❌ 🔴 ${red.length}건 — PR 차단.` : '⚠️ 🟡만 — 통과(권고).');
+await recordRun(SRC, findings.length, red.length, red.length > 0, findings.map((f) => f.klass).filter(Boolean));
 process.exit(red.length ? 1 : 0);
